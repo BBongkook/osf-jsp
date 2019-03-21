@@ -2,8 +2,12 @@ package com.osf.test.servlet;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -14,11 +18,30 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
+import com.osf.test.service.PBoardService;
+import com.osf.test.service.impl.PBoardServiceImpl;
+
 public class PBoardServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
     private static String savePath = "D:\\study\\workspace\\osf-jsp\\WebContent\\upload";
+    private PBoardService pbs = new PBoardServiceImpl();
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.getWriter().append("Served at: ").append(request.getContextPath());
+		String uri = request.getRequestURI();
+		uri = uri.replace("/pboard/", "");
+		if("list".equals(uri)) { 
+			request.setAttribute("pBoardList", pbs.selectPBoardList());
+			RequestDispatcher rd = request.getRequestDispatcher("/views/photo-board/list.jsp");
+			rd.forward(request, response);
+		}else {
+			try {
+			int pbNum = Integer.parseInt(uri);
+			request.setAttribute("pBoard", pbs.selectPBoard(pbNum));
+			RequestDispatcher rd = request.getRequestDispatcher("/views/photo-board/view.jsp");
+			rd.forward(request, response);
+			}catch(NumberFormatException e) {
+				throw new ServletException("상세조회는 번호조회만 가능합니다.");
+			}
+		}
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -36,16 +59,30 @@ public class PBoardServlet extends HttpServlet {
 			sfu.setFileSizeMax(20*1024*1024); //파일 하나당
 			try {
 				List<FileItem> fileList = sfu.parseRequest(request);
+				Map<String,String> pBoard = new HashMap<>();
 				for(int i=0; i<fileList.size(); i++) {
 					FileItem fi = fileList.get(i);
 					if(fi.isFormField()) {
-						
+						pBoard.put(fi.getFieldName(), fi.getString("utf-8"));
 					}else {
-						String fileName = fi.getName();
-						File saveFile = new File(savePath + "\\" + fileName);
+						String rFileName = fi.getName();
+						String extName = rFileName.substring(rFileName.lastIndexOf(".")+1);
+						String fileName = System.currentTimeMillis()+"";
+						File saveFile = new File(savePath + "\\" + fileName+"."+extName);
+						pBoard.put("pb_real_path", rFileName);
+						pBoard.put("pb_file_path", "/upload/"+fileName+"."+extName);
 						fi.write(saveFile);
 					}
 					//input type file은 폼필드가 다르다 저장방식이 다르다.
+				}
+				if(pbs.insertPBoard(pBoard)==1) {
+					request.setAttribute("msg", "집중해라!");
+					request.setAttribute("url", "/views/photo-board/insert.jsp");
+					RequestDispatcher rd = request.getRequestDispatcher("/views/result.jsp");
+					rd.forward(request, response);
+					return;
+				}else {
+					
 				}
 			} catch (FileUploadException e) {
 				// TODO Auto-generated catch block
@@ -63,5 +100,7 @@ public class PBoardServlet extends HttpServlet {
 			
 		}
 	}
-
+	public static void main(String[] args) {
+	
+	}
 }
