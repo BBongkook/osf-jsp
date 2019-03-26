@@ -61,7 +61,7 @@ public class GameList {
 		List<Map<String,String>> gameList = new ArrayList<>();
 		for(int i=0;i<LIST.size();i++) {
 			Map<String,String> game = LIST.get(i);
-			if(6.[game.get("name").indexOf(name)]) {
+			if(6.[game.get("name").indexOf(name)!=-1]) {
 				gameList.add(game);
 			}
 		}
