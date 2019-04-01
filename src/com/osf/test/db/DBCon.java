@@ -20,7 +20,7 @@ public class DBCon {
 	public static final String METHOD;
 	private static Connection con = null;
 	static {
-		InputStream is = ReadFile.class.getResourceAsStream("/com/osf/test/config/db.properties");
+		InputStream is = ReadFile.class.getResourceAsStream("/config/db.properties");
 		Properties prop = new Properties();
 			try {
 				prop.load(is);
